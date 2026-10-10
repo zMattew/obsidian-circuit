@@ -8,9 +8,16 @@ export interface CircuitTopologyNode {
 
 export interface CircuitTopologyBranch {
   id: string;
+  number: number;
   label: string;
   fromNode: string;
   toNode: string;
+}
+
+interface NodeGroup {
+  pins: string[];
+  x: number;
+  y: number;
 }
 
 export interface CircuitTopology {
@@ -46,15 +53,18 @@ export function buildCircuitTopology(data: CircuitData): CircuitTopology {
   const components = data.components || [];
   const disjointSet = new DisjointSet();
   const componentPins = new Map<string, string[]>();
+  const pinPositions = new Map<string, { x: number; y: number }>();
   const validPins = new Set<string>();
   const warnings: string[] = [];
 
   for (const component of components) {
-    const pins = getComponentPins(component).map((pin) => pin.pinId);
+    const componentPinInfo = getComponentPins(component);
+    const pins = componentPinInfo.map((pin) => pin.pinId);
     componentPins.set(component.id, pins);
-    for (const pin of pins) {
-      validPins.add(pin);
-      disjointSet.add(pin);
+    for (const pin of componentPinInfo) {
+      validPins.add(pin.pinId);
+      disjointSet.add(pin.pinId);
+      pinPositions.set(pin.pinId, pin.point);
     }
   }
 
@@ -70,22 +80,42 @@ export function buildCircuitTopology(data: CircuitData): CircuitTopology {
     disjointSet.union(from, to);
   }
 
-  const groups = new Map<string, string[]>();
+  const groups = new Map<string, NodeGroup>();
   for (const component of components) {
     for (const pin of componentPins.get(component.id) || []) {
       const root = disjointSet.find(pin);
-      const group = groups.get(root) || [];
-      group.push(pin);
+      const group = groups.get(root) || { pins: [], x: 0, y: 0 };
+      const point = pinPositions.get(pin);
+      group.pins.push(pin);
+      if (point) {
+        group.x += point.x;
+        group.y += point.y;
+      }
       groups.set(root, group);
     }
   }
 
+  const orderedGroups = Array.from(groups.values()).map((group) => ({
+    ...group,
+    x: group.x / group.pins.length,
+    y: group.y / group.pins.length,
+  }));
+  const referenceNode = orderedGroups.reduce<NodeGroup | null>(
+    (lowest, group) => (!lowest || group.y > lowest.y ? group : lowest),
+    null
+  );
+  const nonReferenceNodes = orderedGroups
+    .filter((group) => group !== referenceNode)
+    .sort((a, b) => a.x - b.x || a.y - b.y || a.pins[0].localeCompare(b.pins[0]));
+  const nodeOrder = referenceNode
+    ? [...nonReferenceNodes, referenceNode]
+    : nonReferenceNodes;
   const nodes: CircuitTopologyNode[] = [];
   const nodeForPin = new Map<string, string>();
-  for (const pins of groups.values()) {
-    const id = `N${nodes.length + 1}`;
-    nodes.push({ id, pins });
-    for (const pin of pins) nodeForPin.set(pin, id);
+  for (const group of nodeOrder) {
+    const id = String(nodes.length + 1);
+    nodes.push({ id, pins: group.pins });
+    for (const pin of group.pins) nodeForPin.set(pin, id);
   }
 
   const branches: CircuitTopologyBranch[] = [];
@@ -107,8 +137,28 @@ export function buildCircuitTopology(data: CircuitData): CircuitTopology {
       label: component.label || component.id,
       fromNode,
       toNode,
+      number: 0,
     });
   }
+
+  branches.sort((a, b) => {
+    const fromA = Number(a.fromNode);
+    const toA = Number(a.toNode);
+    const fromB = Number(b.fromNode);
+    const toB = Number(b.toNode);
+    const referenceA = Math.max(fromA, toA) === nodes.length ? 0 : 1;
+    const referenceB = Math.max(fromB, toB) === nodes.length ? 0 : 1;
+    if (referenceA !== referenceB) return referenceA - referenceB;
+    if (referenceA === 0) {
+      return Math.min(fromA, toA) - Math.min(fromB, toB);
+    }
+    const spanA = Math.abs(fromA - toA);
+    const spanB = Math.abs(fromB - toB);
+    return spanA - spanB || Math.min(fromA, toA) - Math.min(fromB, toB);
+  });
+  branches.forEach((branch, index) => {
+    branch.number = index + 1;
+  });
 
   return { nodes, branches, warnings };
 }
