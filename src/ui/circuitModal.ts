@@ -109,9 +109,9 @@ export class CircuitModal extends Modal {
       attr: { role: 'group', 'aria-label': 'Viste del circuito' },
     });
     const views: Array<[CircuitView, string]> = [
-      ['schematic', 'Schema'],
-      ['graph', 'Grafo'],
-      ['matrix', 'Matrice'],
+      ['schematic', 'Schematic'],
+      ['graph', 'Graph'],
+      ['matrix', 'Matrix'],
     ];
     for (const [view, label] of views) {
       const button = viewTabs.createEl('button', {

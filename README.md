@@ -94,7 +94,7 @@ The editor assigns default IDs and values when placing components. Double-click 
 
 ## Topology views
 
-Use the `Schema`, `Grafo`, and `Matrice` controls on a rendered circuit block to switch views. The graph and matrix are derived from the circuit connections and do not alter the circuit JSON. Each two-terminal component forms one branch oriented from pin `p1` to pin `p2`; wires and junctions combine terminals into nodes. The incidence matrix uses `-1` at the branch's starting node, `+1` at its ending node, and `0` elsewhere. Component labels are used as branch headings, falling back to component IDs.
+Use the `Schematic`, `Graph`, and `Matrix` controls on a rendered circuit block to switch views. The graph and matrix are derived from the circuit connections and do not alter the circuit JSON. Each two-terminal component forms one branch oriented from pin `p1` to pin `p2`; wires and junctions combine terminals into nodes. The incidence matrix uses `-1` at the branch's starting node, `+1` at its ending node, and `0` elsewhere. Component labels are used as branch headings, falling back to component IDs.
 
 The standard node-branch incidence matrix does not model multi-terminal components such as an SPDT switch. Such components are omitted from the branch list and shown in a visible warning. Invalid connection endpoints are also reported in the topology views.
 

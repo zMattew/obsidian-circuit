@@ -16,7 +16,7 @@ export function renderCircuitGraph(parentEl: HTMLElement, topology: CircuitTopol
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 800 400');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Grafo topologico orientato del circuito');
+  svg.setAttribute('aria-label', 'Oriented circuit topology graph');
   parentEl.appendChild(svg);
 
   const markerId = `circuit-arrow-${++markerSequence}`;
