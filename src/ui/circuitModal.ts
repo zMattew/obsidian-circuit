@@ -12,6 +12,10 @@ import { CircuitToolbar } from './circuitToolbar';
 import { ComponentPropertiesModal } from './componentPropertiesModal';
 import { ConnectionPropertiesModal } from './connectionPropertiesModal';
 import { LoopPropertiesModal } from './loopPropertiesModal';
+import { buildCircuitTopology } from '../utils/circuitTopology';
+import { renderCircuitGraph, renderIncidenceMatrix } from './circuitTopologyViews';
+
+type CircuitView = 'schematic' | 'graph' | 'matrix';
 
 export class CircuitModal extends Modal {
   private data: CircuitData;
@@ -21,6 +25,10 @@ export class CircuitModal extends Modal {
   private canvas: CircuitCanvas | null = null;
   private toolbar: CircuitToolbar | null = null;
   private infoEl: HTMLElement | null = null;
+  private canvasWrapEl: HTMLElement | null = null;
+  private graphViewEl: HTMLElement | null = null;
+  private matrixViewEl: HTMLElement | null = null;
+  private viewButtons = new Map<CircuitView, HTMLButtonElement>();
 
   // History stack for Undo / Redo
   private history: string[] = [];
@@ -95,9 +103,29 @@ export class CircuitModal extends Modal {
       },
     });
 
+    const viewContainer = contentEl.createDiv({ cls: 'circuit-editor-view-container' });
+    const viewTabs = viewContainer.createDiv({
+      cls: 'circuit-view-tabs circuit-editor-view-tabs',
+      attr: { role: 'group', 'aria-label': 'Viste del circuito' },
+    });
+    const views: Array<[CircuitView, string]> = [
+      ['schematic', 'Schema'],
+      ['graph', 'Grafo'],
+      ['matrix', 'Matrice'],
+    ];
+    for (const [view, label] of views) {
+      const button = viewTabs.createEl('button', {
+        cls: 'circuit-view-tab',
+        text: label,
+        attr: { type: 'button', 'aria-pressed': String(view === 'schematic') },
+      });
+      button.addEventListener('click', () => this.setActiveView(view));
+      this.viewButtons.set(view, button);
+    }
+
     // Canvas Container
     this.canvas = new CircuitCanvas(
-      contentEl,
+      viewContainer,
       this.data,
       {
         onSelectionChange: (type: SelectionType) => {
@@ -131,11 +159,22 @@ export class CircuitModal extends Modal {
         onDataChange: () => {
           this.pushHistory();
           this.updateFooterInfo();
+          this.refreshTopologyViews();
         },
       },
       this.app,
       this.modalComponent
     );
+    this.canvasWrapEl = viewContainer.querySelector<HTMLElement>('.circuit-editor-canvas-wrap');
+    this.graphViewEl = viewContainer.createDiv({
+      cls: 'circuit-topology-view circuit-editor-topology-view is-view-hidden',
+      attr: { hidden: '' },
+    });
+    this.matrixViewEl = viewContainer.createDiv({
+      cls: 'circuit-topology-view circuit-editor-topology-view is-view-hidden',
+      attr: { hidden: '' },
+    });
+    this.refreshTopologyViews();
     this.toolbar.setGridEnabled(this.data.grid !== false);
 
     // Footer actions
@@ -179,6 +218,10 @@ export class CircuitModal extends Modal {
     this.canvas = null;
     this.toolbar = null;
     this.infoEl = null;
+    this.canvasWrapEl = null;
+    this.graphViewEl = null;
+    this.matrixViewEl = null;
+    this.viewButtons.clear();
   }
 
   private pushHistory(): void {
@@ -221,6 +264,38 @@ export class CircuitModal extends Modal {
     this.canvas?.setData(this.data);
     this.toolbar?.setGridEnabled(this.data.grid !== false);
     this.updateFooterInfo();
+    this.refreshTopologyViews();
+  }
+
+  private refreshTopologyViews(): void {
+    const topology = buildCircuitTopology(this.data);
+    if (this.graphViewEl) renderCircuitGraph(this.graphViewEl, topology);
+    if (this.matrixViewEl) renderIncidenceMatrix(this.matrixViewEl, topology);
+  }
+
+  private setActiveView(view: CircuitView): void {
+    if (view !== 'schematic') this.refreshTopologyViews();
+    if (this.canvasWrapEl) {
+      const showSchematic = view === 'schematic';
+      this.canvasWrapEl.toggleClass('is-view-hidden', !showSchematic);
+      this.canvasWrapEl.hidden = !showSchematic;
+    }
+    if (this.graphViewEl) {
+      const showGraph = view === 'graph';
+      this.graphViewEl.toggleClass('is-view-hidden', !showGraph);
+      this.graphViewEl.hidden = !showGraph;
+    }
+    if (this.matrixViewEl) {
+      const showMatrix = view === 'matrix';
+      this.matrixViewEl.toggleClass('is-view-hidden', !showMatrix);
+      this.matrixViewEl.hidden = !showMatrix;
+    }
+
+    for (const [name, button] of this.viewButtons) {
+      const active = name === view;
+      button.toggleClass('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    }
   }
 
   private updateFooterInfo(): void {

@@ -1,6 +1,6 @@
 {
   "name": "obsidian-circuit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Render SVG circuit schematics from structured JSON blocks with an interactive visual editor.",
   "main": "dist/main.js",
   "scripts": {

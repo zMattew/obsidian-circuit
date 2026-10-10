@@ -1,7 +1,7 @@
 {
   "id": "circuit",
   "name": "Circuit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "minAppVersion": "1.4.4",
   "description": "Render SVG circuit schematics from structured JSON blocks with an interactive visual editor.",
   "author": "zMattew_",

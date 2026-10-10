@@ -49,6 +49,167 @@
   user-select: none;
 }
 
+.circuit-container > [hidden] {
+  display: none !important;
+}
+
+.circuit-container > .is-view-hidden,
+.circuit-editor-view-container > .is-view-hidden {
+  display: none !important;
+}
+
+.circuit-view-tabs {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 6;
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+}
+
+.circuit-view-tab {
+  padding: 3px 8px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+
+.circuit-view-tab:hover,
+.circuit-view-tab.is-active {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.circuit-topology-view {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 42px 10px 10px;
+  background: var(--background-secondary);
+  box-sizing: border-box;
+  color: var(--text-normal);
+}
+
+.circuit-editor-view-container {
+  position: relative;
+  display: flex;
+  flex: 1 1 420px;
+  min-height: 250px;
+  min-width: 0;
+}
+
+.circuit-editor-view-container > [hidden] {
+  display: none !important;
+}
+
+.circuit-editor-view-tabs {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.circuit-editor-view-container > .circuit-editor-canvas-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.circuit-editor-view-container > .circuit-editor-topology-view {
+  padding-top: 48px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+}
+
+.circuit-topology-graph {
+  display: flex;
+  flex-direction: column;
+}
+
+.circuit-topology-graph svg {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  font-family: var(--font-text);
+}
+
+.circuit-topology-edge {
+  fill: none;
+  stroke: var(--text-accent);
+  stroke-width: 2;
+}
+
+.circuit-topology-edge-label,
+.circuit-topology-node-label {
+  fill: var(--text-normal);
+  font-size: 15px;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--background-secondary);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.circuit-topology-node {
+  fill: var(--background-primary);
+  stroke: var(--text-normal);
+  stroke-width: 2;
+}
+
+.circuit-topology-node-label {
+  font-size: 13px;
+}
+
+.circuit-incidence-matrix {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.circuit-matrix-table {
+  border-collapse: collapse;
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.circuit-matrix-table th,
+.circuit-matrix-table td {
+  min-width: 36px;
+  padding: 6px 9px;
+  border: 1px solid var(--background-modifier-border);
+  text-align: center;
+}
+
+.circuit-matrix-table th {
+  background: var(--background-primary);
+  font-weight: 600;
+}
+
+.circuit-view-empty,
+.circuit-topology-warnings {
+  color: var(--text-muted);
+}
+
+.circuit-topology-warnings {
+  flex: 0 0 auto;
+  align-self: stretch;
+  margin: 0;
+  padding: 8px 8px 8px 28px;
+  color: var(--text-warning);
+  background: var(--background-primary);
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
 .circuit-svg.is-panning {
   cursor: grabbing;
 }
@@ -545,4 +706,3 @@
   padding: 0 1px;
   cursor: text;
 }
-

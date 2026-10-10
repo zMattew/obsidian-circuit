@@ -6,6 +6,7 @@ An Obsidian plugin for rendering and editing electrical circuit schematics store
 
 - Render circuit diagrams as SVGs in reading view, including components, connections, labels, current annotations, sign conventions, and mesh loops.
 - Pan and zoom embedded diagrams. Save the current view to the code block or fit the diagram to its components.
+- Switch rendered circuit blocks between the schematic, an oriented topology graph, and the node-branch incidence matrix.
 - Open a visual editor from a rendered block, or use the `Insert schematic` command.
 - Place, move, rotate, and edit components. Connect pins by clicking a source and target pin or by dragging between pins. Dropping a wire on an existing wire creates a junction.
 - Add and edit mesh-loop annotations, connection properties, and text or LaTeX annotations.
@@ -90,6 +91,12 @@ Connections require `from` and `to` pin identifiers. Most components use `.p1` a
 Loops require `id`, `label`, `x`, and `y`. They may also specify `value`, `radius`, and `direction` (`cw` or `ccw`).
 
 The editor assigns default IDs and values when placing components. Double-click a component, connection, or loop to edit its properties. Text annotations open an inline editor. Right-click an item or the canvas to open its context menu.
+
+## Topology views
+
+Use the `Schema`, `Grafo`, and `Matrice` controls on a rendered circuit block to switch views. The graph and matrix are derived from the circuit connections and do not alter the circuit JSON. Each two-terminal component forms one branch oriented from pin `p1` to pin `p2`; wires and junctions combine terminals into nodes. The incidence matrix uses `-1` at the branch's starting node, `+1` at its ending node, and `0` elsewhere. Component labels are used as branch headings, falling back to component IDs.
+
+The standard node-branch incidence matrix does not model multi-terminal components such as an SPDT switch. Such components are omitted from the branch list and shown in a visible warning. Invalid connection endpoints are also reported in the topology views.
 
 ## Editor controls
 

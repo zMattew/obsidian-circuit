@@ -2,6 +2,11 @@ import { App, Component, Notice, setIcon } from 'obsidian';
 import { CircuitComponent, CircuitData, Point } from '../types';
 import { drawComponentSymbol, drawLoopSymbol } from '../utils/drawSymbols';
 import { buildPinMap, generateWirePath, getWirePoints } from '../utils/geometry';
+import { buildCircuitTopology } from '../utils/circuitTopology';
+import type { CircuitTopology } from '../utils/circuitTopology';
+import { renderCircuitGraph, renderIncidenceMatrix } from './circuitTopologyViews';
+
+type CircuitView = 'schematic' | 'graph' | 'matrix';
 
 export class CircuitEmbeddedViewer {
   private containerEl: HTMLElement;
@@ -10,6 +15,10 @@ export class CircuitEmbeddedViewer {
   private gridPatternEl: SVGPatternElement | null = null;
   private zoomLabelEl: HTMLElement | null = null;
   private controlsEl: HTMLElement | null = null;
+  private graphViewEl: HTMLElement | null = null;
+  private matrixViewEl: HTMLElement | null = null;
+  private viewButtons = new Map<CircuitView, HTMLButtonElement>();
+  private topology: CircuitTopology;
 
   private pan: Point = { x: 0, y: 0 };
   private zoom = 1.0;
@@ -24,6 +33,7 @@ export class CircuitEmbeddedViewer {
     private ownerComponent: Component,
     private onSaveView?: (updatedData: CircuitData) => void
   ) {
+    this.topology = buildCircuitTopology(this.data);
     this.containerEl = parentEl.createDiv({ cls: 'circuit-container' });
 
     // Determine embedded display height:
@@ -55,6 +65,7 @@ export class CircuitEmbeddedViewer {
     });
 
     this.renderContent();
+    this.createTopologyViews();
     this.createControls();
     this.bindEvents();
     this.updateTransform();
@@ -254,6 +265,65 @@ export class CircuitEmbeddedViewer {
       for (const loop of this.data.loops) {
         drawLoopSymbol(this.viewportG, loop, false);
       }
+    }
+  }
+
+  private createTopologyViews(): void {
+    const tabs = this.containerEl.createDiv({
+      cls: 'circuit-view-tabs',
+      attr: { role: 'group', 'aria-label': 'Viste del circuito' },
+    });
+    const views: Array<[CircuitView, string]> = [
+      ['schematic', 'Schema'],
+      ['graph', 'Grafo'],
+      ['matrix', 'Matrice'],
+    ];
+    for (const [view, label] of views) {
+      const button = tabs.createEl('button', {
+        cls: 'circuit-view-tab',
+        text: label,
+        attr: { type: 'button', 'aria-pressed': String(view === 'schematic') },
+      });
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.setActiveView(view);
+      });
+      this.viewButtons.set(view, button);
+    }
+
+    this.graphViewEl = this.containerEl.createDiv({
+      cls: ['circuit-topology-view', 'is-view-hidden'],
+      attr: { hidden: '' },
+    });
+    renderCircuitGraph(this.graphViewEl, this.topology);
+
+    this.matrixViewEl = this.containerEl.createDiv({
+      cls: ['circuit-topology-view', 'is-view-hidden'],
+      attr: { hidden: '' },
+    });
+    renderIncidenceMatrix(this.matrixViewEl, this.topology);
+  }
+
+  private setActiveView(view: CircuitView): void {
+    const showSchematic = view === 'schematic';
+    this.svgEl.toggleClass('is-view-hidden', !showSchematic);
+    this.svgEl.hidden = !showSchematic;
+    if (this.graphViewEl) {
+      const showGraph = view === 'graph';
+      this.graphViewEl.toggleClass('is-view-hidden', !showGraph);
+      this.graphViewEl.hidden = !showGraph;
+    }
+    if (this.matrixViewEl) {
+      const showMatrix = view === 'matrix';
+      this.matrixViewEl.toggleClass('is-view-hidden', !showMatrix);
+      this.matrixViewEl.hidden = !showMatrix;
+    }
+    if (this.controlsEl) this.controlsEl.hidden = view !== 'schematic';
+
+    for (const [name, button] of this.viewButtons) {
+      const active = name === view;
+      button.toggleClass('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
     }
   }
 
